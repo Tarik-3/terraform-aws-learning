@@ -1,3 +1,4 @@
+
 provider "aws" {
 
 }
@@ -7,14 +8,13 @@ resource "aws_launch_template" "ec2" {
   image_id      = "ami-02d7ced41dff52ebc"
   instance_type = "t2.micro"
 
-  user_data = base64encode(
-    <<-EOF
-    apt update
-    mkdir /var/www/
-    echo "Tarik again, So enjoy!!!" > var/www/index.html
-    cd /var/www
-    nohup busybox httpd -f -p ${var.server_port} &
-    EOF
+  user_data = base64encode(<<-EOF
+                #!/bin/bash
+                mkdir -p /var/www
+                echo "Hello, Tarik is here again" > /var/www/index.html
+                cd /var/www
+                nohup busybox httpd -f -p ${var.server_port} &
+                EOF
   )
 
   vpc_security_group_ids = [aws_security_group.sg.id]
@@ -99,13 +99,9 @@ resource "aws_lb_listener" "lbl" {
   protocol = "HTTP"
 
   default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "404: page not found"
-      status_code = 404
-    }
+    type = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+    
   }
 }
 
@@ -119,6 +115,10 @@ resource "aws_lb_target_group" "tg" {
     path = "/"
     protocol = "HTTP"
     matcher = "200"
+    interval = 15
+    timeout = 3
+    healthy_threshold = 2
+    unhealthy_threshold = 2
 
   }
 }
@@ -144,4 +144,3 @@ output "lb_dns_name" {
   description = "This is the dns that you can use to access to the web"
   value = aws_lb.alb.dns_name
 }
-
