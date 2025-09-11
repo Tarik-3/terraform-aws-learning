@@ -1,25 +1,44 @@
 
 provider "aws" {
-
+  region = "eu-west-3"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "iac-s3-tarik"
+    key = "stage/services/webserver-cluster/terraform.tfstate"
+    region = "eu-west-3"
+  }
+}
 
+data "terraform_remote_state" "db-state" {
+  backend = "s3"
+  config = {
+    bucket = "iac-s3-tarik"
+    key = "stage/services/data-store/mysql/terraform.tfstate"
+    region = "eu-west-3"
+  }
+}
 
 resource "aws_launch_template" "ec2" {
 
   image_id      = "ami-02d7ced41dff52ebc"
   instance_type = "t2.micro"
 
-  user_data = base64encode(<<-EOF
-                #!/bin/bash
-                mkdir -p /var/www
-                echo "Hello, Tarik is here again" > /var/www/index.html
-                cd /var/www
-                nohup busybox httpd -f -p ${var.server_port} &
-                EOF
+  user_data = base64encode(templatefile("./user-data.sh",{
+    db_port = data.terraform_remote_state.db-state.outputs.port
+    db_address = data.terraform_remote_state.db-state.outputs.address
+    server_port = var.server_port
+  }
+    
+  )
   )
 
   vpc_security_group_ids = [aws_security_group.sg.id]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
 }
 
@@ -41,6 +60,10 @@ resource "aws_autoscaling_group" "asg" {
 
   launch_template {
     id = aws_launch_template.ec2.id
+    version = aws_launch_template.ec2.latest_version
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 
   target_group_arns = [aws_lb_target_group.tg.arn]
