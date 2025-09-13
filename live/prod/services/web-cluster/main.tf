@@ -16,7 +16,9 @@ module "webserver-cluster" {
     cluster_name = "prod"
     min_size = 3
     max_size = 10
-    source = "../../../modules/services/webserver-cluster"
+    
+    source = "git::https://github.com/Tarik-3/terraform-aws-learning.git//modules/services/webserver-cluster?ref=v0.0.1"
+
     db_remote_state_key =  "prod/data-stores/terraform.tfstate"
     bucket_name = "iac-s3-tarik"
 
