@@ -1,6 +1,13 @@
 
 provider "aws" {
     region = "eu-west-3"
+
+    default_tags {
+        tags = {
+            Owner = "Tarik"
+            ManagedBy = "Terraform"
+        }
+    }
 }
 
 terraform {
@@ -17,12 +24,19 @@ module "webserver-cluster" {
     min_size = 3
     max_size = 10
     
-    source = "git::https://github.com/Tarik-3/terraform-aws-learning.git//modules/services/webserver-cluster?ref=v0.0.1"
+    source = "../../../../modules/services/webserver-cluster"
 
     db_remote_state_key =  "prod/data-stores/terraform.tfstate"
     bucket_name = "iac-s3-tarik"
 
+    custom_tags = {
+        Owner= "team-tarik"
+        ManagedBy = "terraform"
+    }
+
 }
+
+
 
 resource "aws_autoscaling_schedule" "working_time" {
     
