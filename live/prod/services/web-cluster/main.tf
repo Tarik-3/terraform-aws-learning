@@ -23,6 +23,7 @@ module "webserver-cluster" {
     cluster_name = "prod"
     min_size = 3
     max_size = 10
+    enable_autoscaling = true
     
     source = "../../../../modules/services/webserver-cluster"
 
@@ -37,26 +38,3 @@ module "webserver-cluster" {
 }
 
 
-
-resource "aws_autoscaling_schedule" "working_time" {
-    
-    scheduled_action_name = "scale-out-during-morning"
-    min_size = 3
-    max_size = 10
-    desired_capacity = 10
-    recurrence = "0 9 * * *"
-
-    autoscaling_group_name = module.webserver-cluster.asg_name
-}
-
-
-resource "aws_autoscaling_schedule" "breaking_time" {
-    
-    scheduled_action_name = "scale-in-during-night"
-    min_size = 3
-    max_size = 10
-    desired_capacity = 3
-    recurrence = "0 17 * * *"
-
-    autoscaling_group_name = module.webserver-cluster.asg_name
-}

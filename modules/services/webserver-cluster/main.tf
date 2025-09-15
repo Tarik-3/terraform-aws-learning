@@ -95,9 +95,32 @@ resource "aws_autoscaling_group" "asg" {
     }
   }
 
+ 
+
   vpc_zone_identifier = data.aws_subnets.sbn.ids
 }
 
+resource "aws_autoscaling_schedule" "business_time" {
+  count = var.enable_autoscaling ? 1 : 0
+  scheduled_action_name = "scale-out-${cluster_name}"
+  min_size = 2
+  max_size = 10
+  desired_capacity = 10
+  recurrence = "0 9 * * *"
+  aws_autoscaling_group_name = aws_autoscaling_group.asg.name
+
+}
+
+resource "aws_autoscaling_schedule" "sleep_time" {
+  count = var.enable_autoscaling ? 1 : 0
+  scheduled_action_name = "scale-in-${cluster_name}"
+  min_size = 2
+  max_size = 10
+  desired_capacity = 2
+  recurrence = "0 17 * * *"
+  aws_autoscaling_group_name = "aws_autoscaling_group.asg.name"
+
+}
 data "aws_subnets" "sbn" {
   filter {
     name   = "vpc-id"
