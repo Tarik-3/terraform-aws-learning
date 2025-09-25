@@ -40,3 +40,13 @@ variable "enable_autoscaling" {
   description = "If is true, enable autoscaling"
   type = bool
 }
+
+variable "ami" {
+  description = "The image that you want to use"
+  default = "ami-02d7ced41dff52ebc"
+}
+
+variable "server_text" {
+  description = "The text showing in the UI"
+  default = "Welcome to the Tarik's World!!!"
+}

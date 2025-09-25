@@ -16,14 +16,18 @@ terraform {
         key = "prod/services/webserver-cluster/terraform.tfstate"
         region = "eu-west-3"
     }
+    
 }
 
 module "webserver-cluster" {
 
     cluster_name = "prod"
     min_size = 3
-    max_size = 10
+    max_size = 10 
     enable_autoscaling = true
+    server_text = "Tarik Tarik"
+
+
     
     source = "../../../../modules/services/webserver-cluster"
 

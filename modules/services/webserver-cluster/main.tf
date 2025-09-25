@@ -12,13 +12,14 @@ data "terraform_remote_state" "db-state" {
 
 resource "aws_launch_template" "ec2" {
 
-  image_id      = "ami-02d7ced41dff52ebc"
+  image_id      = var.ami
   instance_type = "t2.micro"
 
   user_data = base64encode(templatefile("${path.module}/user-data.sh",{
     db_port = data.terraform_remote_state.db-state.outputs.port
     db_address = data.terraform_remote_state.db-state.outputs.address
     server_port = var.server_port
+    text = var.server_text
   }
     
   )
@@ -65,13 +66,20 @@ resource "aws_security_group_rule" "inbound_traffic" {
 
 resource "aws_autoscaling_group" "asg" {
 
+ 
   launch_template {
     id = aws_launch_template.ec2.id
     version = aws_launch_template.ec2.latest_version
   }
-  lifecycle {
-    create_before_destroy = true
+
+  name = aws_launch_template.ec2.name
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
   }
+  
 
   target_group_arns = [aws_lb_target_group.tg.arn]
   health_check_type = "ELB"
@@ -102,23 +110,23 @@ resource "aws_autoscaling_group" "asg" {
 
 resource "aws_autoscaling_schedule" "business_time" {
   count = var.enable_autoscaling ? 1 : 0
-  scheduled_action_name = "scale-out-${cluster_name}"
+  scheduled_action_name = "scale-out-${var.cluster_name}"
   min_size = 2
   max_size = 10
   desired_capacity = 10
   recurrence = "0 9 * * *"
-  aws_autoscaling_group_name = aws_autoscaling_group.asg.name
+  autoscaling_group_name = aws_autoscaling_group.asg.name
 
 }
 
 resource "aws_autoscaling_schedule" "sleep_time" {
   count = var.enable_autoscaling ? 1 : 0
-  scheduled_action_name = "scale-in-${cluster_name}"
+  scheduled_action_name = "scale-in-${var.cluster_name}"
   min_size = 2
   max_size = 10
   desired_capacity = 2
   recurrence = "0 17 * * *"
-  aws_autoscaling_group_name = "aws_autoscaling_group.asg.name"
+  autoscaling_group_name = aws_autoscaling_group.asg.name
 
 }
 data "aws_subnets" "sbn" {
