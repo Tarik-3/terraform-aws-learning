@@ -9,6 +9,26 @@ resource "aws_instance" "ci" {
     instance_type = "t2.micro"
 
     iam_instance_profile = aws_iam_instance_profile.profile.name
+
+    key_name = aws_key_pair.ssh.key_name
+
+    vpc_security_group_ids = [aws_security_group.sg.id]
+}
+
+resource "aws_key_pair" "ssh" {
+    key_name = "my_ssh_key"
+    public_key = file(var.public_ssh_path)
+}
+
+resource "aws_security_group" "sg" {
+    name = "access_ssh"
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 }
 
 data "aws_iam_policy_document" "doc" {
