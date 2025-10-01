@@ -1,23 +1,34 @@
 
 provider "aws" {
-    region = "eu-west-3"
+    region = "eu-west-1"
+    alias = "Irland"
+}
+provider "aws" {
+    region = "eu-west-2"
+    alias = "London"
 }
 
-terraform {
-    backend "s3" {
-        bucket = "iac-s3-tarik"
-        key = "prod/data-stores/terraform.tfstate"
-        region = "eu-west-3"
 
-    }
+
+module "mysql_primary" {
+    providers= {
+        aws = aws.London
+    } 
+    source = "../../../modules/data-stores/mysql"
+    db_password = "tariktarik"
+    db_username = "tarik"
+    db_name = "mysqlme"
+
+    #allow_replicas = 1
 }
 
-resource "aws_db_instance" "mysql" {
-    db_name = "proddb"
-    engine = "mysql"
-    allocated_storage = 10
-    instance_class = "db.t3.micro"
-    skip_final_snapshot = true
-    password = var.prod_db_pass
-    username = var.prod_db_username
+module "mysql_replica" {
+     providers = {
+        aws = aws.Irland
+    } 
+    count = 3
+    source = "../../../modules/data-stores/mysql"
+    replicate_source_db = module.mysql_primary.arn
+
+
 }

@@ -1,9 +1,11 @@
+
+
 output "address" {
-    value = aws_db_instance.mysql.address
+    value = module.mysql_primary.address
     description = "db's address"
 }
 
 output "port" {
     description = "DB's port"
-    value = aws_db_instance.mysql.port
+    value = module.mysql_primary.port
 }
