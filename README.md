@@ -9,3 +9,4 @@ Tasks:
     - Canonical: ["099720109477"]
     - ubuntu value = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
 - Multi region for db
+- Multi account with module
